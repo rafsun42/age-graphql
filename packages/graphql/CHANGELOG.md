@@ -1,5 +1,11 @@
 # @neo4j/graphql
 
+## 5.0.2
+
+### Patch Changes
+
+-   [#4798](https://github.com/neo4j/graphql/pull/4798) [`9a660fa`](https://github.com/neo4j/graphql/commit/9a660fa67b68b325d62efc945b1e91bb353a0637) Thanks [@MacondoExpress](https://github.com/MacondoExpress)! - Fixed bug that caused authorization to not be applied on `@cypher` fields in some situations.
+
 ## 5.0.1
 
 ### Patch Changes
