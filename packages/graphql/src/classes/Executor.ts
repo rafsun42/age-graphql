@@ -27,7 +27,7 @@ import type {
     ManagedTransaction,
     Result,
 } from "neo4j-driver";
-import { Neo4jError } from "neo4j-driver";
+import { Neo4jError, ResultSummary } from "neo4j-driver";
 import Debug from "debug";
 import environment from "../environment";
 import {
@@ -46,6 +46,7 @@ import type { CypherQueryOptions } from "../types";
 import type { GraphQLResolveInfo } from "graphql";
 import { print } from "graphql";
 import { debugCypherAndParams } from "../debug/debug-cypher-and-params";
+import { Client } from "pg";
 
 const debug = Debug(DEBUG_EXECUTE);
 
@@ -77,7 +78,8 @@ type TransactionConfig = {
     };
 };
 
-export type ExecutionContext = Driver | Session | Transaction;
+// TODO: Are Driver, Session and Transaction relevant for PG?
+export type ExecutionContext = Driver | Client | Session | Transaction;
 
 export type ExecutorConstructorParam = {
     executionContext: ExecutionContext;
@@ -129,27 +131,31 @@ export class Executor {
         const params = { ...parameters, ...this.cypherParams };
 
         try {
-            if (isDriverLike(this.executionContext)) {
+            // TODO: only support driverRun for now as
+            // session and transactionRun may not be
+            // relevant to PG.
+
+            // if (isDriverLike(this.executionContext)) {
                 return await this.driverRun({
                     query,
                     parameters: params,
-                    driver: this.executionContext,
+                    driver: this.executionContext as Client,
                     sessionMode,
                     info,
                 });
-            }
+            // }
 
-            if (isSessionLike(this.executionContext)) {
-                return await this.sessionRun({
-                    query,
-                    parameters: params,
-                    sessionMode,
-                    session: this.executionContext,
-                    info,
-                });
-            }
+            // if (isSessionLike(this.executionContext)) {
+            //     return await this.sessionRun({
+            //         query,
+            //         parameters: params,
+            //         sessionMode,
+            //         session: this.executionContext,
+            //         info,
+            //     });
+            // }
 
-            return await this.transactionRun(query, params, this.executionContext);
+            // return await this.transactionRun(query, params, this.executionContext);
         } catch (error) {
             throw this.formatError(error);
         }
@@ -230,72 +236,80 @@ export class Executor {
     }: {
         query: string;
         parameters: Record<string, any>;
-        driver: Driver;
+        driver: Client;
         sessionMode: SessionMode;
         info?: GraphQLResolveInfo;
     }): Promise<QueryResult> {
-        const session = driver.session({
-            // Always specify a default database to avoid requests for routing table
-            database: "neo4j",
-            ...this.sessionConfig,
-            bookmarkManager: driver.executeQueryBookmarkManager,
-            defaultAccessMode: sessionMode,
-        });
+        // TODO: do we need session to use PG?
+        // const session = driver.session({
+        //     // Always specify a default database to avoid requests for routing table
+        //     database: "neo4j",
+        //     ...this.sessionConfig,
+        //     bookmarkManager: driver.executeQueryBookmarkManager,
+        //     defaultAccessMode: sessionMode,
+        // });
 
         try {
-            const result = await this.sessionRun({ query, parameters, info, session, sessionMode });
+            const result = driver.query(query).then((res) => {
+                // TODO: cast PG QueryResult to Neo4J QueryResult here
+                // Following is a dummy data
+                return {
+                    records: [],
+                    summary: new ResultSummary("", {}, 0, 0)
+                };
+            });
             return result;
         } finally {
-            await session.close();
+            // await session.close();
         }
     }
 
-    private async sessionRun({
-        query,
-        parameters,
-        session,
-        sessionMode,
-        info,
-    }: {
-        query: string;
-        parameters: Record<string, any>;
-        session: Session;
-        sessionMode: SessionMode;
-        info?: GraphQLResolveInfo;
-    }): Promise<QueryResult> {
-        let result: QueryResult | undefined;
+    // private async sessionRun({
+    //     query,
+    //     parameters,
+    //     session,
+    //     sessionMode,
+    //     info,
+    // }: {
+    //     query: string;
+    //     parameters: Record<string, any>;
+    //     session: Session;
+    //     sessionMode: SessionMode;
+    //     info?: GraphQLResolveInfo;
+    // }): Promise<QueryResult> {
+    //     let result: QueryResult | undefined;
 
-        switch (sessionMode) {
-            case "READ":
-                result = await session.executeRead((tx: ManagedTransaction) => {
-                    return this.transactionRun(query, parameters, tx);
-                }, this.getTransactionConfig(info));
-                break;
-            case "WRITE":
-                result = await session.executeWrite((tx: ManagedTransaction) => {
-                    return this.transactionRun(query, parameters, tx);
-                }, this.getTransactionConfig(info));
-                break;
-        }
+    //     switch (sessionMode) {
+    //         case "READ":
+                // result = await session.executeRead((tx: ManagedTransaction) => {
+    //                 return this.transactionRun(query, parameters, tx);
+    //             }, this.getTransactionConfig(info));
+    //             break;
+    //         case "WRITE":
+    //             result = await session.executeWrite((tx: ManagedTransaction) => {
+    //                 return this.transactionRun(query, parameters, tx);
+    //             }, this.getTransactionConfig(info));
+    //             break;
+    //     }
 
-        // TODO: remove in 5.0.0, only kept to not make client breaking changes in 4.0.0
-        const lastBookmark = session.lastBookmarks();
-        if (lastBookmark[0]) {
-            this.lastBookmark = lastBookmark[0];
-        }
+    //     // TODO: remove in 5.0.0, only kept to not make client breaking changes in 4.0.0
+    //     const lastBookmark = session.lastBookmarks();
+    //     if (lastBookmark[0]) {
+    //         this.lastBookmark = lastBookmark[0];
+    //     }
 
-        return result;
-    }
+    //     return result;
+    // }
 
-    private transactionRun(
-        query: string,
-        parameters: Record<string, any>,
-        transaction: Transaction | ManagedTransaction
-    ): Result {
-        const queryToRun = this.generateQuery(query);
+    // private transactionRun(
+    //     query: string,
+    //     parameters: Record<string, any>,
+    //     transaction: Transaction | ManagedTransaction
+    // ): Result {
+    //     const queryToRun = this.generateQuery(query);
 
-        debugCypherAndParams(debug, queryToRun, parameters);
+    //     debugCypherAndParams(debug, queryToRun, parameters);
 
-        return transaction.run(queryToRun, parameters);
-    }
+    //     return transaction.run(queryToRun, parameters);
+    // }
 }

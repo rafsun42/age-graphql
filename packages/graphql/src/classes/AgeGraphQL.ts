@@ -50,6 +50,7 @@ import { Neo4jGraphQLSubscriptionsDefaultEngine } from "./subscription/Neo4jGrap
 import type { AssertIndexesAndConstraintsOptions } from "./utils/asserts-indexes-and-constraints";
 import { assertIndexesAndConstraints } from "./utils/asserts-indexes-and-constraints";
 import checkNeo4jCompat from "./utils/verify-database";
+import { Client } from "pg";
 
 type TypeDefinitions = string | DocumentNode | TypeDefinitions[] | (() => TypeDefinitions);
 
@@ -57,7 +58,7 @@ export interface Neo4jGraphQLConstructor {
     typeDefs: TypeDefinitions;
     resolvers?: IExecutableSchemaDefinition["resolvers"];
     features?: Neo4jFeaturesSettings;
-    driver?: Driver;
+    driver?: Client;
     debug?: boolean;
     validate?: boolean;
 }
@@ -66,7 +67,7 @@ class AgeGraphQL {
     private typeDefs: TypeDefinitions;
     private resolvers?: IExecutableSchemaDefinition["resolvers"];
 
-    private driver?: Driver;
+    private driver?: Client;
     private features: ContextFeatures;
 
     private _nodes?: Node[];
@@ -134,62 +135,64 @@ class AgeGraphQL {
         return this.subgraphSchema;
     }
 
-    public async checkNeo4jCompat({
-        driver,
-        sessionConfig,
-    }: {
-        driver?: Driver;
-        sessionConfig?: Neo4jGraphQLSessionConfig;
-    } = {}): Promise<void> {
-        const neo4jDriver = driver || this.driver;
+    // TODO: need for PG?
+    // public async checkNeo4jCompat({
+    //     driver,
+    //     sessionConfig,
+    // }: {
+    //     driver?: Client;
+    //     sessionConfig?: Neo4jGraphQLSessionConfig;
+    // } = {}): Promise<void> {
+    //     const neo4jDriver = driver || this.driver;
 
-        if (!neo4jDriver) {
-            throw new Error("neo4j-driver Driver missing");
-        }
+    //     if (!neo4jDriver) {
+    //         throw new Error("neo4j-driver Driver missing");
+    //     }
 
-        if (!this.dbInfo) {
-            this.dbInfo = await this.getNeo4jDatabaseInfo(neo4jDriver, sessionConfig);
-        }
+    //     if (!this.dbInfo) {
+    //         this.dbInfo = await this.getNeo4jDatabaseInfo(neo4jDriver, sessionConfig);
+    //     }
 
-        return checkNeo4jCompat({
-            driver: neo4jDriver,
-            sessionConfig,
-            dbInfo: this.dbInfo,
-        });
-    }
+    //     return checkNeo4jCompat({
+    //         driver: neo4jDriver,
+    //         sessionConfig,
+    //         dbInfo: this.dbInfo,
+    //     });
+    // }
 
-    public async assertIndexesAndConstraints({
-        driver,
-        sessionConfig,
-        options,
-    }: {
-        driver?: Driver;
-        sessionConfig?: Neo4jGraphQLSessionConfig;
-        options?: AssertIndexesAndConstraintsOptions;
-    } = {}): Promise<void> {
-        if (!(this.executableSchema || this.subgraphSchema)) {
-            throw new Error("You must await `.getSchema()` before `.assertIndexesAndConstraints()`");
-        }
+    // TODO: need for PG?
+    // public async assertIndexesAndConstraints({
+    //     driver,
+    //     sessionConfig,
+    //     options,
+    // }: {
+    //     driver?: Client;
+    //     sessionConfig?: Neo4jGraphQLSessionConfig;
+    //     options?: AssertIndexesAndConstraintsOptions;
+    // } = {}): Promise<void> {
+    //     if (!(this.executableSchema || this.subgraphSchema)) {
+    //         throw new Error("You must await `.getSchema()` before `.assertIndexesAndConstraints()`");
+    //     }
 
-        await (this.executableSchema || this.subgraphSchema);
+    //     await (this.executableSchema || this.subgraphSchema);
 
-        const neo4jDriver = driver || this.driver;
+    //     const neo4jDriver = driver || this.driver;
 
-        if (!neo4jDriver) {
-            throw new Error("neo4j-driver Driver missing");
-        }
+    //     if (!neo4jDriver) {
+    //         throw new Error("neo4j-driver Driver missing");
+    //     }
 
-        if (!this.dbInfo) {
-            this.dbInfo = await this.getNeo4jDatabaseInfo(neo4jDriver, sessionConfig);
-        }
+    //     if (!this.dbInfo) {
+    //         this.dbInfo = await this.getNeo4jDatabaseInfo(neo4jDriver, sessionConfig);
+    //     }
 
-        await assertIndexesAndConstraints({
-            driver: neo4jDriver,
-            sessionConfig,
-            nodes: this.nodes,
-            options: options,
-        });
-    }
+    //     await assertIndexesAndConstraints({
+    //         driver: neo4jDriver,
+    //         sessionConfig,
+    //         nodes: this.nodes,
+    //         options: options,
+    //     });
+    // }
 
     private get nodes(): Node[] {
         if (!this._nodes) {
@@ -260,14 +263,15 @@ class AgeGraphQL {
         }
     }
 
-    private async getNeo4jDatabaseInfo(driver: Driver, sessionConfig?: SessionConfig): Promise<Neo4jDatabaseInfo> {
-        const executorConstructorParam: ExecutorConstructorParam = {
-            executionContext: driver,
-            sessionConfig,
-        };
+    // TODO: need for PG?
+    // private async getNeo4jDatabaseInfo(driver: Client, sessionConfig?: SessionConfig): Promise<Neo4jDatabaseInfo> {
+    //     const executorConstructorParam: ExecutorConstructorParam = {
+    //         executionContext: driver,
+    //         sessionConfig,
+    //     };
 
-        return getNeo4jDatabaseInfo(new Executor(executorConstructorParam));
-    }
+    //     return getNeo4jDatabaseInfo(new Executor(executorConstructorParam));
+    // }
 
     private wrapResolvers(resolvers: NonNullable<IExecutableSchemaDefinition["resolvers"]>) {
         if (!this.schemaModel) {

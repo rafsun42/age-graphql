@@ -32,11 +32,12 @@ import type { Neo4jGraphQLSchemaModel } from "../../../schema-model/Neo4jGraphQL
 import type { AuthorizationContext, ContextFeatures, FulltextContext } from "../../../types";
 import type { Neo4jGraphQLContext } from "../../../types/neo4j-graphql-context";
 import { getAuthorizationContext } from "./utils/get-authorization-context";
+import { Client } from "pg";
 
 const debug = Debug(DEBUG_GRAPHQL);
 
 export type WrapResolverArguments = {
-    driver?: Driver;
+    driver?: Driver | Client;
     nodes: Node[];
     relationships: Relationship[];
     jwtPayloadFieldsMap?: Map<string, string>;
@@ -112,9 +113,10 @@ export const wrapQueryAndMutation =
         if (dbInfo) {
             neo4jDatabaseInfo = dbInfo;
         }
-        if (!neo4jDatabaseInfo?.version) {
-            neo4jDatabaseInfo = await getNeo4jDatabaseInfo(executor);
-        }
+
+        // if (!neo4jDatabaseInfo?.version) {
+        //     neo4jDatabaseInfo = await getNeo4jDatabaseInfo(executor);
+        // }
 
         const internalContext = {
             nodes,

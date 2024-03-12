@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-import { Neo4jGraphQL, Neo4jGraphQLConstructor } from "./classes";
+import { AgeGraphQL, Neo4jGraphQL, Neo4jGraphQLConstructor } from "./classes";
 import { Neo4jGraphQLSubscriptionsCDCEngine } from "./classes/subscription/Neo4jGraphQLSubscriptionsCDCEngine";
 import * as directives from "./graphql/directives";
 import { CartesianPoint } from "./graphql/objects/CartesianPoint";
@@ -31,7 +31,7 @@ const objects = { Point, CartesianPoint };
 /**
  * Core library functionality.
  */
-export { Neo4jGraphQL, Neo4jGraphQLCallback, Neo4jGraphQLConstructor, Neo4jGraphQLContext };
+export { AgeGraphQL, Neo4jGraphQL, Neo4jGraphQLCallback, Neo4jGraphQLConstructor, Neo4jGraphQLContext };
 
 /**
  * Library built-in GraphQL types.
